@@ -1,24 +1,26 @@
-import {  from } from "rxjs";
-import {  distinctUntilChanged, distinctUntilKeyChanged } from "rxjs/operators";
+// Referencias
 
+import { fromEvent } from "rxjs";
+import { debounceTime, map } from "rxjs/operators";
+import { ajax } from "rxjs/ajax";
 
+const body = document.querySelector("body");
+const txtInput = document.createElement("input");
+const orderList = document.createElement("ol");
+body.append(txtInput, orderList);
 
-interface Personaje {
-    nombre: string;
-}
+// Streams
 
-const personajes: Personaje[] = [
-    {nombre: "Megaman"},
-    {nombre: "X"},
-    {nombre: "Zero"},
-    {nombre: "Dr. Willy"},
-    {nombre: "Megaman"},
-    {nombre: "Megaman"},
-    {nombre: "Zero"},
-    {nombre: "X"},
-  
-];
+const input$ = fromEvent<KeyboardEvent>(txtInput, "keyup");
 
-from(personajes).pipe(
-    distinctUntilKeyChanged('nombre')
-).subscribe(console.log);
+input$
+  .pipe(
+    debounceTime(500),
+    map((event) => {
+      const texto = event.target["value"];
+      return ajax.getJSON(`https://api.github.com/users/${texto}`);
+    })
+  )
+  .subscribe((resp) => {
+    resp.subscribe(console.log);
+  });
